@@ -14,6 +14,7 @@ db = SQLAlchemy()
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), unique=False, nullable=False)
     is_active = db.Column(db.Boolean(), unique=False, nullable=False)
@@ -27,7 +28,8 @@ class User(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "email": self.email,
+            "name": self.name,
+            "email": self.email
             # do not serialize the password, its a security breach
         }
 
@@ -35,7 +37,7 @@ class Favorite_character(db.Model):
     # __tablename__ = 'favorite_character'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    # character_id = db.Column(db.Integer, db.ForeignKey('character.id'), nullable=False)
+    character_id = db.Column(db.Integer, db.ForeignKey('character.id'), nullable=False)
 
 class Character(db.Model):
     # __tablename__ = 'character'
@@ -48,7 +50,7 @@ class Character(db.Model):
     eye_color = db.Column(db.String(120), nullable=False)
     birth_year = db.Column(db.String(120), nullable=False)
     gender = db.Column(db.String(120), nullable=False)
-    # favorite_characters = db.relationship('Favorite_character', backref='character', lazy=True)
+    favorite_characters = db.relationship('Favorite_character', backref='character', lazy=True)
     # planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'), nullable=False) #planet-character
     # vehicles = db.relationship('Vehicles', backref='character', lazy=True) #character-vehicle
     def __repr__(self):
@@ -64,14 +66,14 @@ class Character(db.Model):
             "skin_color": self.skin_color,
             "eye_color": self.eye_color,
             "birth_year": self.birth_year,
-            "gender": self.gender,
+            "gender": self.gender
         }
 
 class Favorite_vehicle(db.Model):
     # __tablename__ = 'favorite_vehicle'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-#     vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'), nullable=False)
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'), nullable=False)
 
 class Vehicle(db.Model):
     # __tablename__ = 'vehicle'
@@ -85,7 +87,7 @@ class Vehicle(db.Model):
     cargo_capacity = db.Column(db.String(120), nullable=False)
     vehicle_class= db.Column(db.String(120), nullable=False)
     manufacturer= db.Column(db.String(120), nullable=False)
-    # favorite_vehicles = db.relationship('Favorite_vehicle', backref='vehicle', lazy=True)
+    favorite_vehicles = db.relationship('Favorite_vehicle', backref='vehicle', lazy=True)
     # character_id = db.Column(db.Integer, db.ForeignKey('character.id'), nullable=False) #character-vehicle
     def __repr__(self):
         return '<Vehicle %r>' % self.id
@@ -101,14 +103,14 @@ class Vehicle(db.Model):
             "passangers": self.passangers,
             "cargo_capacity": self.cargo_capacity,
             "vehicle_class": self.vehicle_class,
-            "manufacturer": self.manufacturer,
+            "manufacturer": self.manufacturer
         }
 
 class Favorite_planet(db.Model):
     # __tablename__ = 'favorite_planet'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-#     planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'), nullable=False)
+    planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'), nullable=False)
 
 class Planet(db.Model):
     # __tablename__ = 'planet'
@@ -122,7 +124,7 @@ class Planet(db.Model):
     terrain = db.Column(db.String(120), nullable=False)
     surface_water = db.Column(db.String(120), nullable=False)
     population = db.Column(db.String(120), nullable=False)
-    # favorite_planets = db.relationship('Favorite_planet', backref='planet', lazy=True)
+    favorite_planets = db.relationship('Favorite_planet', backref='planet', lazy=True)
     # characters = db.relationship('Character', backref='planet', lazy=True) #planet-character
     def __repr__(self):
         return '<Planet %r>' % self.id
