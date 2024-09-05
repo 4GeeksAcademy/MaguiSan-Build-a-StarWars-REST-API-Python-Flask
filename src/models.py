@@ -1,23 +1,12 @@
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
-# many to many
-# class Person(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(50), nullable=False)
-#     addresses = db.relationship('Address', backref='person', lazy=True)
-
-# class Address(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     email = db.Column(db.String(120), nullable=False)
-#     person_id = db.Column(db.Integer, db.ForeignKey('person.id'), nullable=False)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), unique=False, nullable=False)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False)
     favorite_characters = db.relationship('Favorite_character', backref='user', lazy=True)
     favorite_vehicles = db.relationship('Favorite_vehicle', backref='user', lazy=True)
     favorite_planets = db.relationship('Favorite_planet', backref='user', lazy=True)
@@ -38,6 +27,16 @@ class Favorite_character(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     character_id = db.Column(db.Integer, db.ForeignKey('character.id'), nullable=False)
+
+    def __repr__(self):
+        return '<Favorite_character %r>' % self.id
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "character_id": self.character_id
+        }
 
 class Character(db.Model):
     # __tablename__ = 'character'
@@ -75,6 +74,16 @@ class Favorite_vehicle(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'), nullable=False)
 
+    def __repr__(self):
+        return '<Favorite_vehicle %r>' % self.id
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "vehicle_id": self.vehicle_id
+        }
+
 class Vehicle(db.Model):
     # __tablename__ = 'vehicle'
     id = db.Column(db.Integer, primary_key=True)
@@ -111,6 +120,15 @@ class Favorite_planet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'), nullable=False)
+    def __repr__(self):
+        return '<Favorite_planet %r>' % self.id
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "planet_id": self.planet_id
+        }
 
 class Planet(db.Model):
     # __tablename__ = 'planet'

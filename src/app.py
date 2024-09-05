@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Character, Planet, Vehicle
+from models import db, User, Character, Planet, Vehicle, Favorite_character, Favorite_planet, Favorite_vehicle
 #from models import Person
 
 app = Flask(__name__)
@@ -161,9 +161,49 @@ def get_vehicle(vehicle_id):
     except Exception as e:
         return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
 
+#Agregar personajes, planetas y vechiculos favoritos
 @app.route('/favorites', methods=['POST'])
 def add_favorite():
-    # try:
+    try:
+        # Obteniendo y guardando el id del body ingresado
+        user_id_new = request.json.get("user_id")
+        character_id_new = request.json.get("character_id")
+        planet_id_new = request.json.get("planet_id")
+        vehicle_id_new = request.json.get("vehicle_id")
+        
+        if not user_id_new:
+            return jsonify({"message":"Please enter a user ID"}), 400
+        
+        if character_id_new:
+            #Creando y guardando un nuevo favorito
+            new_fav = Favorite_character(user_id = user_id_new, character_id = character_id_new)
+            db.session.add(new_fav)
+            db.session.commit()
+            response_body = new_fav.serialize()
+            return jsonify(response_body), 201
+        
+        elif planet_id_new:
+            new_fav = Favorite_planet(user_id = user_id_new, planet_id = planet_id_new)
+            db.session.add(new_fav)
+            db.session.commit()
+            response_body = new_fav.serialize()
+            return jsonify(response_body), 201
+        
+        elif vehicle_id_new:
+            new_fav = Favorite_vehicle(user_id=user_id_new, vehicle_id=vehicle_id_new)
+            db.session.add(new_fav)
+            db.session.commit()
+            response_body = new_fav.serialize()
+            return jsonify(response_body), 201
+        else:
+            # mandaste un user id, pero no me mandaste que favoritear
+            return jsonify({"message":"You entered the user ID, but you haven't indicated which ID you want to mark as a favorite."}), 400
+
+    except Exception as e:
+        return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+
+
+
 
 
 
