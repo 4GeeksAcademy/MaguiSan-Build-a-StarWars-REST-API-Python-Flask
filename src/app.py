@@ -36,7 +36,9 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-# -----------------------------------------Endpoints-----------------------------------
+# ---------------------------------------------------------ENDPOINTS-------------------------------------------
+
+#--------------------------------------------users----------------------------------
 # Obtiene informacion de todos los usuarios
 @app.route('/users', methods=['GET'])
 def get_users():
@@ -52,6 +54,38 @@ def get_users():
             }
             return jsonify(response_body), 200
         return jsonify({'error': 'Users not found'}), 404
+    except Exception as e:
+        return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+
+#Obtiene informacion de un solo usuario segun su id
+@app.route('/users/<int:id>')
+def get_user(id):
+    # print(id)
+    try:
+        query_user = User.query.filter_by(id = id).first()
+        # print(query_user.serialize())
+        if query_user is None:
+            return jsonify({'error': 'User not found'}), 404
+        response_body = {
+            "msg": "ok",
+            "result": query_user.serialize()
+        }
+        return jsonify(response_body), 200
+    except Exception as e:
+        return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+
+#Elimina un usuario por id
+@app.route('/users/<int:id>', methods = ['DELETE'])
+def delete_user(id):
+    try:
+        user = User.query.get(id)
+        if not user:
+            return jsonify({'error':'User not found'}), 404
+        #Eliminando el usuario de la db
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'message': 'User deleted successfully'}), 200
+
     except Exception as e:
         return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
 
@@ -90,6 +124,7 @@ def get_character(character_id):
         return jsonify(response_body), 200
     except Exception as e:
         return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+    
 #------------------------------------Planetas----------------------------------
 #Obtiene todos los planetas
 @app.route('/planets', methods=['GET'])
@@ -125,6 +160,7 @@ def get_planet(planet_id):
         return jsonify(response_body), 200
     except Exception as e:
         return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+    
 #------------------------------------Vehiculos---------------------------------
 #Obtiene todos los planetas
 @app.route('/vehicles', methods=['GET'])
@@ -156,6 +192,36 @@ def get_vehicle(vehicle_id):
         response_body = {
             "msg": "ok",
             "result": query_vehicle.serialize()
+        }
+        return jsonify(response_body), 200
+    except Exception as e:
+        return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+    
+#--------------------------------------------------------Favoritos---------------------------------
+#Obtiene todos los favoritos de un usuario segun su id
+@app.route('/favorites/<int:id_user>')
+def get_fav(id_user):
+    try:
+        user = User.query.get(id_user)
+        if not user:
+            return jsonify({"error": "User not found. Please enter a valid user ID to view their favorites."}), 404
+        
+        fav_characters = Favorite_character.query.filter_by(user_id = id_user).all()
+        fav_planets = Favorite_planet.query.filter_by(user_id = id_user).all()
+        fav_vehicles = Favorite_vehicle.query.filter_by(user_id = id_user).all()
+        # print(fav_characters)
+        favorites_characters = list(map(lambda item: item.serialize(), fav_characters))
+        favorites_planets = list(map(lambda item: item.serialize(), fav_planets))
+        favorites_vehicles = list(map(lambda item: item.serialize(), fav_vehicles))
+        # print(favorites_characters)
+
+        if not favorites_characters and not favorites_planets and not favorites_vehicles:
+            return jsonify({'message': 'Favorites not found'}), 404
+
+        response_body = {
+            "favorites_characters": favorites_characters,
+            "favorites_planets": favorites_planets,
+            "favorites_vehicles": favorites_vehicles
         }
         return jsonify(response_body), 200
     except Exception as e:
@@ -202,25 +268,68 @@ def add_favorite():
     except Exception as e:
         return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
 
+#Elimina un personaje favorito de cada usuario segun su id
+@app.route('/favorite/character/<int:id_user>/<int:id_character>', methods = ['DELETE'])
+def delete_fav_character(id_user, id_character):
+    try:
+        #Verificando que los id ingresados existan para proceder con la busqueda del favorito
+        user = User.query.get(id_user)
+        character = Character.query.get(id_character)
+        if not user or not character:
+            return jsonify({"error": "The user or character does not exist. Please enter valid ID values."}), 404
+        
+        favorite_character = Favorite_character.query.filter_by(user_id = id_user, character_id = id_character).first()
+        if not favorite_character:
+            return jsonify({'error': 'Character not found in their favorites'}), 404
+        
+        #Eliminando el favorito de la db
+        db.session.delete(favorite_character)
+        db.session.commit()
+        return jsonify({'message': 'Favorite character deleted successfully'}), 200
 
+    except Exception as e:
+        return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+    
+#Elimina un planeta favorito de cada usuario segun su id
+@app.route('/favorite/planet/<int:id_user>/<int:id_planet>', methods = ['DELETE'])
+def delete_fav_planet(id_user, id_planet):
+    try:
+        user = User.query.get(id_user)
+        planet = Planet.query.get(id_planet)
+        if not user or not planet:
+            return jsonify({"error": "The user or planet does not exist. Please enter valid ID values."}), 404
+        
+        favorite_planet = Favorite_planet.query.filter_by(user_id = id_user, planet_id = id_planet).first()
+        if not favorite_planet:
+            return jsonify({'error':'Planet not found in their favorites'}), 404
+        
+        db.session.delete(favorite_planet)
+        db.session.commit()
+        return jsonify({'message': 'Favorite planet deleted successfully'}), 200
 
+    except Exception as e:
+        return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
 
+#Elimina un vehiculo favorito de cada usuario segun su id
+@app.route('/favorite/vehicle/<int:id_user>/<int:id_vehicle>', methods = ['DELETE'])
+def delete_fav_vehicle(id_user, id_vehicle):
+    try:
+        user = User.query.get(id_user)
+        vehicle = Vehicle.query.get(id_vehicle)
+        if not user or not vehicle:
+            return jsonify({"error": "The user or vehicle does not exist. Please enter valid ID values."}), 404
 
+        favorite_vehicle = Favorite_vehicle.query.filter_by(user_id = id_user, vehicle_id = id_vehicle).first()
+        if not favorite_vehicle:
+            return jsonify({'error':'Vehicle not found in their favorites'}), 404
+        
+        db.session.delete(favorite_vehicle)
+        db.session.commit()
+        return jsonify({'message': 'Favorite vehicle deleted successfully'}), 200
 
-
-
-# @app.route('/user', methods=['GET'])
-# def handle_hello():
-#     response_body = {
-#         "msg": "Hello, this is your GET /user response "
-#     }
-#     return jsonify(response_body), 200
-
-# if vehicle id ..apuntando la tabal donde quiero ir
-# si existe character_id 
-# elif, elif
-
-
+    except Exception as e:
+        return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+    
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
